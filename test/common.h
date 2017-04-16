@@ -1,22 +1,24 @@
 #ifndef TEST_COMMON_H_
 #define TEST_COMMON_H_
 
-#include <stdlib.h>
-#include <string.h>
+#include "uv.h"
+#include "uv_proxy_t.h"
 
-#define CHECK(VALUE, MESSAGE)                                                \
-    do {                                                                     \
-      if ((VALUE)) break;                                                    \
-      fprintf(stderr, "Assertion failure: " #MESSAGE "\n");                  \
-      abort();                                                               \
-    } while (0)
+#include "test/test-list.h"
+#include "mini/test.h"
 
-#define CHECK_EQ(A, B, MESSAGE) CHECK((A) == (B), MESSAGE)
-#define CHECK_NE(A, B, MESSAGE) CHECK((A) != (B), MESSAGE)
-
+static uv_link_t left;
+static uv_link_t right;
+static uv_proxy_t p;
+static uv_buf_t buf;
 
 static unsigned int counter;
 static int partial_try_write;
+
+
+static void uv_test_error_cb(uv_proxy_t* p, uv_link_t* side, int err) {
+  abort();
+}
 
 
 static void uv_test_log(uv_link_t* link, char* fmt, ...) {
@@ -127,5 +129,35 @@ static uv_link_methods_t uv_test_methods = {
   .shutdown = uv_test_shutdown,
   .close = uv_test_close
 };
+
+
+static void test_init() {
+  int err;
+
+  err = uv_link_init(&left, &uv_test_methods);
+  CHECK_EQ(err, 0, "uv_link_init(left)");
+
+  err = uv_link_init(&right, &uv_test_methods);
+  CHECK_EQ(err, 0, "uv_link_init(right)");
+
+  err = uv_proxy_init(&p, uv_test_error_cb);
+  CHECK_EQ(err, 0, "uv_proxy_init(p)");
+
+  err = uv_link_chain(&left, &p.left);
+  CHECK_EQ(err, 0, "uv_link_chain(left)");
+
+  err = uv_link_chain(&right, &p.right);
+  CHECK_EQ(err, 0, "uv_link_chain(right)");
+}
+
+
+static void test_reset() {
+  counter = 0;
+
+  free(left.data);
+  free(right.data);
+  left.data = NULL;
+  right.data = NULL;
+}
 
 #endif  /* TEST_COMMON_H_ */
