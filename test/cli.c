@@ -16,6 +16,11 @@ static void test_reset() {
 }
 
 
+static void error_cb(uv_proxy_t* p, int err) {
+  abort();
+}
+
+
 int main() {
   int err;
 
@@ -30,7 +35,7 @@ int main() {
   err = uv_link_init(&right, &uv_test_methods);
   CHECK_EQ(err, 0, "uv_link_init(right)");
 
-  err = uv_proxy_init(&p);
+  err = uv_proxy_init(&p, error_cb);
   CHECK_EQ(err, 0, "uv_proxy_init(p)");
 
   err = uv_link_chain(&left, &p.left);

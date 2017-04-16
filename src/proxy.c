@@ -52,7 +52,7 @@ void uv_proxy_alloc_cb(uv_link_t* link, size_t suggested_size, uv_buf_t* buf) {
   size_t len;
   char* base;
 
-  /* TODO(indutny): use ringbuffer */
+  /* TODO(indutny): cache results */
   len = kProxyChunkLength;
   base = malloc(len);
 
@@ -74,14 +74,13 @@ void uv_proxy_read_cb(uv_link_t* link, ssize_t nread, const uv_buf_t* buf) {
       free(buf->base);
       err = uv_link_shutdown(other, uv_proxy_shutdown_cb, NULL);
 
-      /* TODO(indutny): handle error */
       if (err != 0)
-        abort();
+        return p->error_cb(p, err);
 
       return;
     }
 
-    /* TODO(indutny): handle error */
+    err = nread;
     goto fatal;
   }
 
@@ -89,7 +88,6 @@ void uv_proxy_read_cb(uv_link_t* link, ssize_t nread, const uv_buf_t* buf) {
   buf_copy.len = nread;
   err = uv_link_try_write(other, &buf_copy, 1);
 
-  /* TODO(indutny): handle error */
   if (err < 0 && err != UV_EAGAIN && err != UV_ENOSYS)
     goto fatal;
 
@@ -109,7 +107,6 @@ void uv_proxy_read_cb(uv_link_t* link, ssize_t nread, const uv_buf_t* buf) {
 
   err = uv_link_write(other, &buf_copy, 1, NULL, uv_proxy_write_cb, buf->base);
 
-  /* TODO(indutny): handle error */
   if (err != 0)
     goto fatal;
 
@@ -117,7 +114,7 @@ void uv_proxy_read_cb(uv_link_t* link, ssize_t nread, const uv_buf_t* buf) {
 
 fatal:
   free(buf->base);
-  abort();
+  p->error_cb(p, err);
 }
 
 
@@ -136,27 +133,22 @@ void uv_proxy_write_cb(uv_link_t* source, int status, void* arg) {
   if (status == UV_ECANCELED)
     return;
 
-  /* TODO(indutny): report errors */
-  if (status < 0) {
-    abort();
-    return;
-  }
+  if (status < 0)
+    return p->error_cb(p, status);
 
   err = uv_link_read_start(uv_proxy_get_other(p, source));
 
-  /* TODO(indutny): report errors */
-  if (err != 0) {
-    abort();
-    return;
-  }
+  if (err != 0)
+    return p->error_cb(p, err);
 }
 
 
-int uv_proxy_init(uv_proxy_t* proxy) {
+int uv_proxy_init(uv_proxy_t* proxy, uv_proxy_error_cb cb) {
   int err;
 
   proxy->left.data = NULL;
   proxy->right.data = NULL;
+  proxy->error_cb = cb;
   proxy->close_cb = NULL;
 
   err = uv_link_init(&proxy->left, &uv_proxy_methods);
