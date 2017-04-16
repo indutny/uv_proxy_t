@@ -1,0 +1,24 @@
+{
+  "name": "uv_proxy_t",
+  "version": "1.0.0",
+  "description": "uv_link_t proxy link",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "gypkg build uv_proxy_t.gyp --insecure"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/indutny/uv_proxy_t.git"
+  },
+  "keywords": [
+    "uv_link_t",
+    "uv_proxy_t"
+  ],
+  "author": "Fedor Indutny <fedor@indutny.com> (http://darksi.de/)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/indutny/uv_proxy_t/issues"
+  },
+  "homepage": "https://github.com/indutny/uv_proxy_t#readme"
+}
