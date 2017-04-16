@@ -16,6 +16,7 @@
 
 
 static unsigned int counter;
+static int partial_try_write;
 
 
 static void uv_test_log(uv_link_t* link, char* fmt, ...) {
@@ -85,6 +86,7 @@ static int uv_test_try_write(uv_link_t* link,
                              const uv_buf_t bufs[],
                              unsigned int nbufs) {
   unsigned int i;
+  int r;
 
   uv_test_log(link, "[%d] try_write(%u):", counter++, nbufs);
   for (i = 0; i < nbufs; i++) {
@@ -93,7 +95,9 @@ static int uv_test_try_write(uv_link_t* link,
   }
   uv_test_log(link, "\n");
 
-  return 0;
+  r = partial_try_write;
+  partial_try_write = 0;
+  return r;
 }
 
 
