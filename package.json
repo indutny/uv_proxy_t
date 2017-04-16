@@ -4,7 +4,7 @@
   "description": "uv_link_t proxy link",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "npm run build && ./out/Release/uv_proxy_t-test",
     "build": "gypkg build uv_proxy_t.gyp --insecure"
   },
   "repository": {

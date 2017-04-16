@@ -35,7 +35,7 @@
       "gypkg_deps": [
         "git://github.com/indutny/uv_link_t@^1.0.0 [gpg] => uv_link_t.gyp:uv_link_t",
         "git://github.com/libuv/libuv.git@^1.9.0 => uv.gyp:libuv",
-        "git://github.com/indutny/mini-test.c.git#master => mini-test.gyp:mini-test",
+        "git://github.com/indutny/mini-test.c.git@^v1.0.0 => mini-test.gyp:mini-test",
       ],
     },
 
