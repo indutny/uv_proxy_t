@@ -29,14 +29,27 @@ int main() {
   err = uv_link_chain(&right, &p.right);
   CHECK_EQ(err, 0, "uv_link_chain(right)");
 
-  uv_link_propagate_alloc_cb(&left, 10, &buf);
+  /* PLAIN WRITE */
+
+  uv_link_propagate_alloc_cb(&left, 11, &buf);
   CHECK_NE(buf.base, NULL, "uv_link_propagate_alloc_cb");
-  CHECK(buf.len >= 10, "uv_link_propagate_alloc_cb");
+  CHECK(buf.len >= 11, "uv_link_propagate_alloc_cb");
 
-  memcpy(buf.base, "hello world", 10);
-  uv_link_propagate_read_cb(&left, 32, &buf);
+  memcpy(buf.base, "hello world", 11);
+  uv_link_propagate_read_cb(&left, 11, &buf);
 
-  fprintf(stderr, "%s", right.data);
+  CHECK_EQ(strcmp(left.data, "[1] read_stop()\n"
+                             "[3] read_start()\n"), 0,
+           "plain write [l]");
+  CHECK_EQ(strcmp(right.data, "[0] try_write(1): 11:\"hello world\"\n"
+                              "[2] write(1): 11:\"hello world\"\n"), 0,
+           "plain write [r]");
+
+  free(left.data);
+  free(right.data);
+  left.data = NULL;
+  right.data = NULL;
+  counter = 0;
 
   return 0;
 }

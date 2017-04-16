@@ -88,7 +88,7 @@ void uv_proxy_read_cb(uv_link_t* link, ssize_t nread, const uv_buf_t* buf) {
   err = uv_link_try_write(other, &buf_copy, 1);
 
   /* TODO(indutny): handle error */
-  if (err < 0 && err != UV_EAGAIN)
+  if (err < 0 && err != UV_EAGAIN && err != UV_ENOSYS)
     goto fatal;
 
   buf_copy.len -= err;
@@ -140,7 +140,7 @@ void uv_proxy_write_cb(uv_link_t* source, int status, void* arg) {
     return;
   }
 
-  err = uv_link_read_stop(uv_proxy_get_other(p, source));
+  err = uv_link_read_start(uv_proxy_get_other(p, source));
 
   /* TODO(indutny): report errors */
   if (err != 0) {

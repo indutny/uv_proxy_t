@@ -15,6 +15,9 @@
 #define CHECK_NE(A, B, MESSAGE) CHECK((A) != (B), MESSAGE)
 
 
+static unsigned int counter;
+
+
 static void uv_test_log(uv_link_t* link, char* fmt, ...) {
   va_list ap;
   va_list ap_copy;
@@ -45,13 +48,13 @@ static void uv_test_log(uv_link_t* link, char* fmt, ...) {
 }
 
 static int uv_test_read_start(uv_link_t* link) {
-  uv_test_log(link, "read_start()\n");
+  uv_test_log(link, "[%d] read_start()\n", counter++);
   return 0;
 }
 
 
 static int uv_test_read_stop(uv_link_t* link) {
-  uv_test_log(link, "read_stop()\n");
+  uv_test_log(link, "[%d] read_stop()\n", counter++);
   return 0;
 }
 
@@ -65,9 +68,11 @@ static int uv_test_write(uv_link_t* link,
                          void* arg) {
   unsigned int i;
 
-  uv_test_log(link, "write(%u):", nbufs);
-  for (i = 0; i < nbufs; i++)
-    uv_test_log(link, " %d", (int) bufs[i].len);
+  uv_test_log(link, "[%d] write(%u):", counter++, nbufs);
+  for (i = 0; i < nbufs; i++) {
+    uv_test_log(link, " %d:\"%.*s\"", (int) bufs[i].len, bufs[i].len,
+                bufs[i].base);
+  }
   uv_test_log(link, "\n");
 
   cb(source, 0, arg);
@@ -81,9 +86,11 @@ static int uv_test_try_write(uv_link_t* link,
                              unsigned int nbufs) {
   unsigned int i;
 
-  uv_test_log(link, "try_write(%u):", nbufs);
-  for (i = 0; i < nbufs; i++)
-    uv_test_log(link, " %d", (int) bufs[i].len);
+  uv_test_log(link, "[%d] try_write(%u):", counter++, nbufs);
+  for (i = 0; i < nbufs; i++) {
+    uv_test_log(link, " %d:\"%.*s\"", (int) bufs[i].len, bufs[i].len,
+                bufs[i].base);
+  }
   uv_test_log(link, "\n");
 
   return 0;
@@ -94,7 +101,7 @@ static int uv_test_shutdown(uv_link_t* link,
                             uv_link_t* source,
                             uv_link_shutdown_cb cb,
                             void* arg) {
-  uv_test_log(link, "shutdown()\n");
+  uv_test_log(link, "[%d] shutdown()\n", counter++);
   cb(source, 0, arg);
 
   return 0;
@@ -103,7 +110,7 @@ static int uv_test_shutdown(uv_link_t* link,
 
 static void uv_test_close(uv_link_t* link, uv_link_t* source,
                           uv_link_close_cb cb) {
-  uv_test_log(link, "close()\n");
+  uv_test_log(link, "[%d] close()\n", counter++);
   cb(source);
 }
 
