@@ -77,6 +77,8 @@ void uv_proxy_read_cb(uv_link_t* link, ssize_t nread, const uv_buf_t* buf) {
       /* TODO(indutny): handle error */
       if (err != 0)
         abort();
+
+      return;
     }
 
     /* TODO(indutny): handle error */

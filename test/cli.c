@@ -3,16 +3,26 @@
 
 #include "test/common.h"
 
+static uv_link_t left;
+static uv_link_t right;
+
+static void test_reset() {
+  counter = 0;
+
+  free(left.data);
+  free(right.data);
+  left.data = NULL;
+  right.data = NULL;
+}
+
+
 int main() {
   int err;
 
-  uv_link_t left;
-  uv_link_t right;
   uv_proxy_t p;
   uv_buf_t buf;
 
-  left.data = NULL;
-  right.data = NULL;
+  test_reset();
 
   err = uv_link_init(&left, &uv_test_methods);
   CHECK_EQ(err, 0, "uv_link_init(left)");
@@ -45,11 +55,17 @@ int main() {
                               "[2] write(1): 11:\"hello world\"\n"), 0,
            "plain write [r]");
 
-  free(left.data);
-  free(right.data);
-  left.data = NULL;
-  right.data = NULL;
-  counter = 0;
+  test_reset();
+
+  /* EOF */
+
+  uv_link_propagate_alloc_cb(&left, 1, &buf);
+  uv_link_propagate_read_cb(&left, UV_EOF, &buf);
+
+  CHECK_EQ(left.data, NULL, "EOF [l]");
+  CHECK_EQ(strcmp(right.data, "[0] shutdown()\n"), 0, "EOF [r]");
+
+  test_reset();
 
   return 0;
 }
