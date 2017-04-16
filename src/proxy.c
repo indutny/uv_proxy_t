@@ -16,6 +16,10 @@ static uv_link_t* uv_proxy_get_other(uv_proxy_t* proxy, uv_link_t* link);
 
 static const size_t kProxyChunkLength = 16384;
 
+static const unsigned int kShutdownLeft = 1;
+static const unsigned int kShutdownRight = 2;
+static const unsigned int kShutdownBoth = kShutdownLeft | kShutdownRight;
+
 
 static uv_link_methods_t uv_proxy_methods = {
   .read_start = uv_link_default_read_start,
@@ -72,8 +76,8 @@ void uv_proxy_read_cb(uv_link_t* link, ssize_t nread, const uv_buf_t* buf) {
   if (nread < 0) {
     if (nread == UV_EOF) {
       free(buf->base);
-      err = uv_link_shutdown(other, uv_proxy_shutdown_cb, NULL);
 
+      err = uv_link_shutdown(other, uv_proxy_shutdown_cb, NULL);
       if (err != 0)
         return p->error_cb(p, link, err);
 
@@ -123,7 +127,18 @@ fatal_other:
 
 
 void uv_proxy_shutdown_cb(uv_link_t* source, int status, void* arg) {
-  /* No-op */
+  uv_proxy_t* p;
+
+  p = source->data;
+  if (source == &p->left)
+    p->shutdown |= kShutdownLeft;
+  else
+    p->shutdown |= kShutdownRight;
+
+  if (p->shutdown != kShutdownBoth)
+    return;
+
+  p->error_cb(p, source, UV_EOF);
 }
 
 
@@ -155,6 +170,7 @@ int uv_proxy_init(uv_proxy_t* proxy, uv_proxy_error_cb cb) {
   proxy->right.data = NULL;
   proxy->error_cb = cb;
   proxy->close_cb = NULL;
+  proxy->shutdown = 0;
 
   err = uv_link_init(&proxy->left, &uv_proxy_methods);
   if (err != 0)
