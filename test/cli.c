@@ -16,7 +16,7 @@ static void test_reset() {
 }
 
 
-static void error_cb(uv_proxy_t* p, int err) {
+static void error_cb(uv_proxy_t* p, uv_link_t* side, int err) {
   abort();
 }
 

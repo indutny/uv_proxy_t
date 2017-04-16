@@ -75,21 +75,20 @@ void uv_proxy_read_cb(uv_link_t* link, ssize_t nread, const uv_buf_t* buf) {
       err = uv_link_shutdown(other, uv_proxy_shutdown_cb, NULL);
 
       if (err != 0)
-        return p->error_cb(p, err);
+        return p->error_cb(p, link, err);
 
       return;
     }
 
     err = nread;
-    goto fatal;
+    goto fatal_self;
   }
 
   buf_copy.base = buf->base;
   buf_copy.len = nread;
   err = uv_link_try_write(other, &buf_copy, 1);
-
   if (err < 0 && err != UV_EAGAIN && err != UV_ENOSYS)
-    goto fatal;
+    goto fatal_other;
 
   buf_copy.len -= err;
   buf_copy.base += err;
@@ -103,18 +102,23 @@ void uv_proxy_read_cb(uv_link_t* link, ssize_t nread, const uv_buf_t* buf) {
   /* Asynchronous write needed */
   err = uv_link_read_stop(link);
   if (err != 0)
-    goto fatal;
+    goto fatal_self;
 
   err = uv_link_write(other, &buf_copy, 1, NULL, uv_proxy_write_cb, buf->base);
-
   if (err != 0)
-    goto fatal;
+    goto fatal_other;
 
   return;
 
-fatal:
+fatal_self:
   free(buf->base);
-  p->error_cb(p, err);
+  p->error_cb(p, link, err);
+  return;
+
+fatal_other:
+  free(buf->base);
+  p->error_cb(p, other, err);
+  return;
 }
 
 
@@ -125,6 +129,7 @@ void uv_proxy_shutdown_cb(uv_link_t* source, int status, void* arg) {
 
 void uv_proxy_write_cb(uv_link_t* source, int status, void* arg) {
   uv_proxy_t* p;
+  uv_link_t* other;
   int err;
 
   p = source->data;
@@ -134,12 +139,12 @@ void uv_proxy_write_cb(uv_link_t* source, int status, void* arg) {
     return;
 
   if (status < 0)
-    return p->error_cb(p, status);
+    return p->error_cb(p, source, status);
 
-  err = uv_link_read_start(uv_proxy_get_other(p, source));
-
+  other = uv_proxy_get_other(p, source);
+  err = uv_link_read_start(other);
   if (err != 0)
-    return p->error_cb(p, err);
+    return p->error_cb(p, other, err);
 }
 
 

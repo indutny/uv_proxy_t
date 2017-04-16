@@ -5,7 +5,7 @@
 
 typedef struct uv_proxy_s uv_proxy_t;
 
-typedef void (*uv_proxy_error_cb)(uv_proxy_t* proxy, int err);
+typedef void (*uv_proxy_error_cb)(uv_proxy_t* proxy, uv_link_t* side, int err);
 typedef void (*uv_proxy_close_cb)(uv_proxy_t* proxy);
 
 struct uv_proxy_s {
