@@ -51,6 +51,7 @@
     "sources": [
       "test/main.c",
       "test/test-async-write.c",
+      "test/test-both-eof.c",
       "test/test-eof.c",
       "test/test-partial-write.c",
       "test/test-sync-write.c",

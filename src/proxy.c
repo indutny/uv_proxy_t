@@ -138,7 +138,7 @@ void uv_proxy_shutdown_cb(uv_link_t* source, int status, void* arg) {
   if (p->shutdown != kShutdownBoth)
     return;
 
-  p->error_cb(p, source, UV_EOF);
+  p->error_cb(p, NULL, UV_EOF);
 }
 
 
